@@ -4,9 +4,9 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$CURRENT_DIR/.envs"
 
 if [[ -z "$TMUX_FZF_SESSION_FORMAT" ]]; then
-    sessions=$(tmux list-sessions)
+    sessions=$(tmux list-sessions | tac)
 else
-    sessions=$(tmux list-sessions -F "#S: $TMUX_FZF_SESSION_FORMAT")
+    sessions=$(tmux list-sessions -F "#S: $TMUX_FZF_SESSION_FORMAT" | tac)
 fi
 
 if [[ -z "$TMUX_FZF_SWITCH_CURRENT" ]]; then
