@@ -15,7 +15,7 @@ fi
 if [[ -z "$TMUX_FZF_WINDOW_FORMAT" ]]; then
     windows=$(tmux list-windows $window_filter)
 else
-    windows=$(tmux list-windows $window_filter -F "#S:#{window_index}: $TMUX_FZF_WINDOW_FORMAT")
+    windows=$(tmux list-windows $window_filter -F "#{p11:#S:#{window_index}}: $TMUX_FZF_WINDOW_FORMAT")
 fi
 
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --header='Select an action.'"
