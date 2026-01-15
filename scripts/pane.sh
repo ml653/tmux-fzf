@@ -5,6 +5,7 @@ source "$CURRENT_DIR/.envs"
 
 current_pane_origin=$(tmux display-message -p '#S:#{window_index}.#{pane_index}: #{window_name}')
 current_pane=$(tmux display-message -p '#S:#{window_index}.#{pane_index}')
+current_window=$(tmux display-message -p '#S:#{window_index}')
 
 if [[ -z "$TMUX_FZF_PANE_FORMAT" ]]; then
     panes=$(tmux list-panes -a -F "#S:#{window_index}.#{pane_index}: [#{window_name}:#{pane_title}] #{pane_current_command}  [#{pane_width}x#{pane_height}] [history #{history_size}/#{history_limit}, #{history_bytes} bytes] #{?pane_active,[active],[inactive]}")
@@ -14,7 +15,7 @@ fi
 
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --header='Select an action.'"
 if [[ -z "$1" ]]; then
-    action=$(printf "switch\nbreak\njoin\nswap\nlayout\nkill\nresize\n[cancel]" | eval "$TMUX_FZF_BIN $TMUX_FZF_OPTIONS")
+    action=$(printf "switch\nswitch_this\nbreak\njoin\nswap\nlayout\nkill\nresize\n[cancel]" | eval "$TMUX_FZF_BIN $TMUX_FZF_OPTIONS")
 else
     action="$1"
 fi
@@ -54,8 +55,11 @@ else
     else
         FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --header='Select target pane.'"
     fi
-    if [[ "$action" == "switch" || "$action" == "join" ]]; then
-        if [[ -z "$TMUX_FZF_SWITCH_CURRENT" || "$action" == "join" ]]; then
+    if [[ "$action" == "switch" || "$action" == "switch_this" || "$action" == "join" ]]; then
+        if [[ "$action" == "switch_this" ]]; then
+            # Filter to show only panes in the current window
+            panes=$(echo "$panes" | grep "^$current_window\.")
+        elif [[ -z "$TMUX_FZF_SWITCH_CURRENT" || "$action" == "join" ]]; then
             panes=$(echo "$panes" | grep -v "^$current_pane")
         fi
         target_origin=$(printf "%s\n[cancel]" "$panes" | eval "$TMUX_FZF_BIN $TMUX_FZF_OPTIONS $TMUX_FZF_PREVIEW_OPTIONS")
@@ -65,7 +69,7 @@ else
     fi
     [[ "$target_origin" == "[cancel]" || -z "$target_origin" ]] && exit
     target=$(echo "$target_origin" | sed 's/: .*//')
-    if [[ "$action" == "switch" ]]; then
+    if [[ "$action" == "switch" || "$action" == "switch_this" ]]; then
         echo "$target" | sed -E 's/:.*//g' | xargs -I{} tmux switch-client -t {}
         echo "$target" | sed -E 's/\..*//g' | xargs -I{} tmux select-window -t {}
         echo "$target" | xargs -I{} tmux select-pane -t {}
